@@ -1,53 +1,25 @@
-#!/usr/bin/node
-
-const request = require('request');
+const axios = require('axios');
 
 const movieId = process.argv[2];
-const filmEndPoint = 'https://swapi-api.hbtn.io/api/films/' + movieId;
-let people = [];
-const names = [];
 
-const requestCharacters = async () => {
-  await new Promise(resolve => request(filmEndPoint, (err, res, body) => {
-    if (err || res.statusCode !== 200) {
-      console.error('Error: ', err, '| StatusCode: ', res.statusCode);
-    } else {
-      const jsonBody = JSON.parse(body);
-      people = jsonBody.characters;
-      resolve();
-    }
-  }));
-};
+if (!movieId) {
+  console.log('Usage: node 0-starwars_characters.js <Movie ID>');
+  process.exit(1);
+}
 
-const requestNames = async () => {
-  if (people.length > 0) {
-    for (const p of people) {
-      await new Promise(resolve => request(p, (err, res, body) => {
-        if (err || res.statusCode !== 200) {
-          console.error('Error: ', err, '| StatusCode: ', res.statusCode);
-        } else {
-          const jsonBody = JSON.parse(body);
-          names.push(jsonBody.name);
-          resolve();
-        }
-      }));
-    }
-  } else {
-    console.error('Error: Got no Characters for some reason');
-  }
-};
+const apiUrl = `https://swapi.dev/api/films/${movieId}/`;
 
-const getCharNames = async () => {
-  await requestCharacters();
-  await requestNames();
+axios.get(apiUrl)
+  .then(response => {
+    const charactersUrls = response.data.characters;
+    const characterPromises = charactersUrls.map(url => axios.get(url));
 
-  for (const n of names) {
-    if (n === names[names.length - 1]) {
-      process.stdout.write(n);
-    } else {
-      process.stdout.write(n + '\n');
-    }
-  }
-};
-
-getCharNames();
+    return Promise.all(characterPromises);
+  })
+  .then(characterResponses => {
+    const characterNames = characterResponses.map(response => response.data.name);
+    characterNames.forEach(name => console.log(name));
+  })
+  .catch(error => {
+    console.error('Error:', error.message);
+  });
