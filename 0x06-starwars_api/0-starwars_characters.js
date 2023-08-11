@@ -1,12 +1,12 @@
 #!/usr/bin/node
 
-const request = require('request');
+const request = require ('request');
 
 const movieId = process.argv[2];
 
-const url = `https://swapi-api.hbtn.io/api/films/${movieId}`;
+const url = 'https://swapi-api.hbtn.io/api/films/${movieId}';
 
-request(url, async (err, res, body) => {
+request (url, async (err, res, body) => {
   err && console.log(err);
 
   const charactersArray = (JSON.parse(res.body).characters);
